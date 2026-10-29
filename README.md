@@ -138,12 +138,12 @@ android-activity-navigation/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Rajapakshaminindu/android-activity-navigation.git
+   git clone https://github.com/Rajapakshaminindu/assingment01-activity-navigation.git
    ```
 
 2. **Open in Android Studio:**
    - Launch Android Studio.
-   - Select **Open** and choose the `android-activity-navigation` directory.
+   - Select **Open** and choose the project directory.
    - Allow Gradle to sync dependencies.
 
 3. **Run the App:**
@@ -166,7 +166,7 @@ android-activity-navigation/
 
 **Minindu Rajapaksha**
 - GitHub: [@Rajapakshaminindu](https://github.com/Rajapakshaminindu)
-- Repository: [android-activity-navigation](https://github.com/Rajapakshaminindu/android-activity-navigation)
+- Repository: [assingment01-activity-navigation](https://github.com/Rajapakshaminindu/assingment01-activity-navigation)
 
 ---
 
