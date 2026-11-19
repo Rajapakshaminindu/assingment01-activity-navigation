@@ -1,5 +1,7 @@
 package com.example.activityassignment
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -56,6 +58,25 @@ class SecondActivity : ComponentActivity() {
     companion object {
         const val EXTRA_MESSAGE = "extra_message"
         const val EXTRA_TIMESTAMP = "extra_timestamp"
+        const val DEFAULT_MESSAGE = "Welcome to the second activity!"
+
+        /**
+         * Factory function to create an explicit Intent for SecondActivity.
+         * Encapsulates extras packaging and default fallback values.
+         */
+        fun createIntent(
+            context: Context,
+            message: String? = null,
+            timestamp: Long = System.currentTimeMillis()
+        ): Intent {
+            return Intent(context, SecondActivity::class.java).apply {
+                putExtra(
+                    EXTRA_MESSAGE,
+                    if (message.isNullOrBlank()) "Hello from MainActivity! 🚀" else message
+                )
+                putExtra(EXTRA_TIMESTAMP, timestamp)
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,7 +84,7 @@ class SecondActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val receivedMessage = intent.getStringExtra(EXTRA_MESSAGE)
-            ?: "Welcome to the second activity!"
+            ?: DEFAULT_MESSAGE
         val receivedTimestamp = intent.getLongExtra(EXTRA_TIMESTAMP, System.currentTimeMillis())
 
         setContent {
