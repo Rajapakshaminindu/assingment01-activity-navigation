@@ -209,16 +209,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
             AnimatedButton(
                 text = "Launch Second Activity ➡️",
                 onClick = {
-                    val intent = Intent(context, SecondActivity::class.java).apply {
-                        putExtra(
-                            SecondActivity.EXTRA_MESSAGE,
-                            customMessage.ifBlank { "Hello from MainActivity! 🚀" }
-                        )
-                        putExtra(
-                            SecondActivity.EXTRA_TIMESTAMP,
-                            System.currentTimeMillis()
-                        )
-                    }
+                    val intent = SecondActivity.createIntent(context, customMessage)
                     context.startActivity(intent)
                 },
                 modifier = Modifier.fillMaxWidth(0.85f)
