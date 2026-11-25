@@ -18,6 +18,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -35,10 +37,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -70,6 +77,7 @@ import com.example.activityassignment.ui.theme.CardBorder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.random.Random
 
 /**
  * MainActivity serves as the entry point launcher activity of the application.
@@ -79,6 +87,7 @@ import java.util.Locale
  * 3. Passing dynamic data payload using Intent extras
  * 4. Receiving return payload via modern Activity Result API
  * 5. Custom animated buttons with Jetpack Compose spring physics
+ * 6. Interactive preset chips, character counter, and reset controls
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,6 +111,16 @@ fun MainScreen(modifier: Modifier = Modifier) {
     var returnedStatus by remember { mutableStateOf<String?>(null) }
     var replyTime by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
+    val presetScrollState = rememberScrollState()
+
+    val maxMessageLength = 120
+    val presetOptions = listOf(
+        "🚀 Hello from Compose!",
+        "📅 Team Sync at 3 PM",
+        "🎉 Great job on the sprint!",
+        "⚠️ Urgent review required",
+        "💡 Quick question on architecture"
+    )
 
     // Activity Result Launcher for two-way Intent navigation
     val launcher = rememberLauncherForActivityResult(
@@ -201,26 +220,87 @@ fun MainScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Text(
-                        text = "📦 Intent Payload (Extra)",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📦 Intent Payload (Extra)",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        IconButton(
+                            onClick = {
+                                customMessage = presetOptions[Random.nextInt(presetOptions.size)]
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Shuffle preset message",
+                                tint = Color(0xFF818CF8)
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Type a message below to pass it across to SecondActivity:",
+                        text = "Type a message or select a quick template:",
                         fontSize = 12.sp,
                         color = Color.White.copy(alpha = 0.7f)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Preset chips carousel
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(presetScrollState),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        presetOptions.forEach { preset ->
+                            val isSelected = preset == customMessage
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isSelected) Color(0xFF818CF8) else Color.White.copy(alpha = 0.1f),
+                                modifier = Modifier.clickable { customMessage = preset }
+                            ) {
+                                Text(
+                                    text = preset,
+                                    fontSize = 12.sp,
+                                    color = if (isSelected) Color(0xFF0F172A) else Color.White,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = customMessage,
-                        onValueChange = { customMessage = it },
+                        onValueChange = {
+                            if (it.length <= maxMessageLength) {
+                                customMessage = it
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
+                        trailingIcon = {
+                            if (customMessage.isNotEmpty()) {
+                                IconButton(onClick = { customMessage = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Clear input",
+                                        tint = Color.White.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
@@ -228,6 +308,16 @@ fun MainScreen(modifier: Modifier = Modifier) {
                             unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
                             cursorColor = Color(0xFF818CF8)
                         )
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "${customMessage.length}/$maxMessageLength",
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.align(Alignment.End)
                     )
                 }
             }
