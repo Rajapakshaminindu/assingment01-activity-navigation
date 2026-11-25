@@ -1,16 +1,21 @@
 package com.example.activityassignment
 
-import android.content.Intent
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -39,6 +44,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +58,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,6 +67,9 @@ import com.example.activityassignment.ui.theme.AccentYellow
 import com.example.activityassignment.ui.theme.ActivityAssignmentTheme
 import com.example.activityassignment.ui.theme.CardBackground
 import com.example.activityassignment.ui.theme.CardBorder
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * MainActivity serves as the entry point launcher activity of the application.
@@ -67,7 +77,8 @@ import com.example.activityassignment.ui.theme.CardBorder
  * 1. Registering launcher activity in AndroidManifest.xml
  * 2. Creating an explicit Intent to launch SecondActivity
  * 3. Passing dynamic data payload using Intent extras
- * 4. Custom animated buttons with Jetpack Compose spring physics
+ * 4. Receiving return payload via modern Activity Result API
+ * 5. Custom animated buttons with Jetpack Compose spring physics
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,7 +98,25 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var customMessage by remember { mutableStateOf("Hello from MainActivity! 🚀") }
+    var returnedReply by remember { mutableStateOf<String?>(null) }
+    var returnedStatus by remember { mutableStateOf<String?>(null) }
+    var replyTime by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
+
+    // Activity Result Launcher for two-way Intent navigation
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val data = result.data
+            returnedReply = data?.getStringExtra(SecondActivity.EXTRA_REPLY_MESSAGE)
+            returnedStatus = data?.getStringExtra(SecondActivity.EXTRA_REPLY_STATUS)
+            val ts = data?.getLongExtra(SecondActivity.EXTRA_TIMESTAMP, System.currentTimeMillis())
+                ?: System.currentTimeMillis()
+            val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+            replyTime = sdf.format(Date(ts))
+        }
+    }
 
     // Smooth gradient background
     Box(
@@ -151,14 +180,14 @@ fun MainScreen(modifier: Modifier = Modifier) {
 
             // Subtitle
             Text(
-                text = "Learn Intent navigation, lifecycle transitions, and Compose animation physics.",
+                text = "Learn Intent navigation, two-way results, and Compose animation physics.",
                 fontSize = 15.sp,
                 color = Color.White.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center,
                 lineHeight = 22.sp
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Interactive payload configuration card
             Card(
@@ -203,14 +232,91 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // Return Result Card (Activity Result received)
+            AnimatedVisibility(
+                visible = returnedReply != null,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                        .border(1.dp, Color(0xFF38BDF8).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "📬 Response Received from SecondActivity",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF38BDF8)
+                            )
+                            returnedStatus?.let { status ->
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color(0xFF38BDF8).copy(alpha = 0.2f)
+                                ) {
+                                    Text(
+                                        text = status,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF38BDF8),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "\"${returnedReply ?: ""}\"",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Returned at: ${replyTime ?: ""}",
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = Color.White.copy(alpha = 0.6f)
+                            )
+                            TextButton(
+                                onClick = {
+                                    returnedReply = null
+                                    returnedStatus = null
+                                }
+                            ) {
+                                Text("Clear", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
 
             // Animated Launch Button
             AnimatedButton(
                 text = "Launch Second Activity ➡️",
                 onClick = {
                     val intent = SecondActivity.createIntent(context, customMessage)
-                    context.startActivity(intent)
+                    launcher.launch(intent)
                 },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
@@ -218,7 +324,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(18.dp))
 
             Text(
-                text = "Uses explicit Intent(context, SecondActivity::class.java)",
+                text = "Uses Activity Result API launcher.launch(intent)",
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
